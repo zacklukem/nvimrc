@@ -1,0 +1,9 @@
+[submodule "pack/plugins/start/nvim-surround"]
+	path = pack/plugins/start/nvim-surround
+	url = https://github.com/kylechui/nvim-surround.git
+[submodule "pack/plugins/start/gruvbox.nvim"]
+	path = pack/plugins/start/gruvbox.nvim
+	url = https://github.com/ellisonleao/gruvbox.nvim
+[submodule "/Users/zlmayhew/.config/nvim/pack/github/start/copilot.vim"]
+	path = /Users/zlmayhew/.config/nvim/pack/github/start/copilot.vim
+	url = https://github.com/github/copilot.vim.git
