@@ -4,6 +4,9 @@ require("config.lazy")
 -- General Settings --
 ----------------------
 
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+
 vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.colorcolumn = "80"
@@ -52,6 +55,15 @@ require("lazy").setup({
       },
     },
 
+    -- auto-save.nvim
+    {
+      "okuuva/auto-save.nvim",
+      event = { "InsertLeave", "TextChanged" },
+      opts = {
+        debounce_delay = 2000, -- save 2s after last change
+      },
+    },
+
     -- nvim-surround
     {
       "kylechui/nvim-surround",
@@ -74,17 +86,14 @@ require("lazy").setup({
       version = '^1.0.0', -- optional: only update when a new 1.x version is released
     },
 
-    -- telescope-file-browser.nvim
-    {
-      "nvim-telescope/telescope-file-browser.nvim",
-      dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" }
-    },
-
     -- telescope.nvim
     {
       'nvim-telescope/telescope.nvim',
       tag = '0.1.8',
-      dependencies = { 'nvim-lua/plenary.nvim' },
+      dependencies = {
+        'nvim-lua/plenary.nvim',
+        { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' },
+      },
       opts = {
         extensions = {
           file_browser = {
@@ -94,33 +103,49 @@ require("lazy").setup({
       },
     },
 
-    -- toggleterm.nvim
-    {'akinsho/toggleterm.nvim', version = "*", opts = {}}
+    -- blink.cmp
+    {
+      'saghen/blink.cmp',
+      version = '1.*',
+      opts = {
+        fuzzy = {
+          prebuilt_binaries = {
+            download = true,  -- explicitly enable binary download
+          },
+        },
+      },
+    },
+
+    {
+      "neovim/nvim-lspconfig",
+      lazy = false,
+    },
+
+    {
+      "nvim-tree/nvim-tree.lua",
+      opts = {},
+    },
+
+    -- codediff.nvim
+    {
+      "esmuellert/codediff.nvim",
+      cmd = "CodeDiff",
+    },
   },
   -- Configure any other settings here. See the documentation for more details.
   -- colorscheme that will be used when installing plugins.
   install = { colorscheme = { "gruvbox" } },
   -- automatically check for plugin updates
-  checker = { enabled = true },
+  checker = { enabled = false },
 })
 
 --------------------------
 -- Post-plugin Settings --
 --------------------------
 
-vim.api.nvim_create_autocmd("User", {
-  pattern = "BlinkCmpMenuOpen",
-  callback = function()
-    vim.b.copilot_suggestion_hidden = true
-  end,
-})
-
-vim.api.nvim_create_autocmd("User", {
-  pattern = "BlinkCmpMenuClose",
-  callback = function()
-    vim.b.copilot_suggestion_hidden = false
-  end,
-})
+-- LSP
+-- vim.lsp.enable('lua_ls')
+vim.lsp.enable('rust_analyzer')
 
 vim.cmd("colorscheme gruvbox")
 
@@ -133,7 +158,6 @@ vim.cmd("colorscheme gruvbox")
 local builtin = require("telescope.builtin")
 local telescope = require("telescope")
 vim.keymap.set("n", "<leader>ff", builtin.find_files, {})
--- vim.keymap.set("n", "<leader>ff", telescope.extensions.file_browser.file_browser, {})
 vim.keymap.set("n", "<leader>fg", builtin.live_grep, {})
 vim.keymap.set("n", "<leader>fb", builtin.buffers, {})
 vim.keymap.set("n", "<leader>fh", builtin.help_tags, {})
@@ -159,7 +183,51 @@ for _, dir in ipairs({ "h", "j", "k", "l" }) do
   vim.keymap.set({ "n", "t" }, "<C-" .. dir .. ">", "<Cmd>wincmd " .. dir .. "<CR>", {})
 end
 
--- TERMINAL
+-- TREE
 
-vim.keymap.set({ "n", "t" }, "<C-`>", '<Cmd>ToggleTerm<CR>', {})
+vim.keymap.set("n", "<leader>bb", '<Cmd>NvimTreeToggle<CR>', {})
+vim.keymap.set("n", "<leader>bf", '<Cmd>NvimTreeFindFile<CR>', {})
+
+-- GIT
+
+vim.keymap.set("n", "<leader>gg", '<Cmd>CodeDiff<CR>', {})
+
+-- LSP
+
+vim.api.nvim_create_autocmd("LspAttach", {
+  callback = function(event)
+    local map = function(mode, keys, func, desc)
+      vim.keymap.set(mode, keys, func, { buffer = event.buf, desc = "LSP: " .. desc })
+    end
+
+    local telescope = require("telescope.builtin")
+
+    -- Navigation
+    map("n", "gd", vim.lsp.buf.definition, "Goto Definition")
+    map("n", "gD", vim.lsp.buf.declaration, "Goto Declaration")
+    map("n", "gr", telescope.lsp_references, "Goto References")
+    map("n", "gi", telescope.lsp_implementations, "Goto Implementation")
+    map("n", "gt", telescope.lsp_type_definitions, "Goto Type Definition")
+
+    -- Diagnostics
+    map("n", "<leader>d", vim.diagnostic.open_float, "Show Diagnostic")
+    map("n", "[d", vim.diagnostic.goto_prev, "Prev Diagnostic")
+    map("n", "]d", vim.diagnostic.goto_next, "Next Diagnostic")
+    map("n", "<leader>q", vim.diagnostic.setloclist, "Diagnostic List")
+
+    -- Actions
+    map("n", "<F2>", vim.lsp.buf.rename, "Rename")
+    map("n", "<C-.>", vim.lsp.buf.code_action, "Code Action")
+    map("i", "<C-.>", vim.lsp.buf.code_action, "Code Action")
+    map("n", "<leader>f", vim.lsp.buf.format, "Format")
+
+    -- Hover / Signature
+    map("n", "K", vim.lsp.buf.hover, "Hover Docs")
+    map("i", "<C-k>", vim.lsp.buf.signature_help, "Signature Help")
+
+    -- Workspace
+    map("n", "<leader>ws", telescope.lsp_workspace_symbols, "Workspace Symbols")
+    map("n", "<leader>ds", telescope.lsp_document_symbols, "Document Symbols")
+  end,
+})
 
