@@ -62,7 +62,7 @@ require("lazy").setup({
       "okuuva/auto-save.nvim",
       event = { "InsertLeave", "TextChanged" },
       opts = {
-        debounce_delay = 2000, -- save 2s after last change
+        debounce_delay = 500, -- save 2s after last change
       },
     },
 
