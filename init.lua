@@ -19,6 +19,8 @@ vim.opt.smartindent = true
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
+vim.o.winborder = "rounded"
+
 -------------
 -- Plugins --
 -------------
@@ -78,7 +80,7 @@ require("lazy").setup({
     {
       'romgrk/barbar.nvim',
       dependencies = {
-        'lewis6991/gitsigns.nvim', -- OPTIONAL: for git status
+        'lewis6991/gitsigns.nvim',     -- OPTIONAL: for git status
         'nvim-tree/nvim-web-devicons', -- OPTIONAL: for file icons
       },
       init = function() vim.g.barbar_auto_setup = false end,
@@ -100,6 +102,11 @@ require("lazy").setup({
             -- theme = "ivy",
           },
         },
+        defaults = {
+          preview = {
+            treesitter = false,
+          },
+        },
       },
     },
 
@@ -110,7 +117,21 @@ require("lazy").setup({
       opts = {
         fuzzy = {
           prebuilt_binaries = {
-            download = true,  -- explicitly enable binary download
+            download = true, -- explicitly enable binary download
+          },
+        },
+        completion = {
+          menu = {
+            auto_show = true,
+            border = "rounded",
+            winhighlight =
+            "Normal:BlinkCmpDoc,FloatBorder:BlinkCmpDocBorder,CursorLine:BlinkCmpMenuSelection,Search:None",
+          },
+          documentation = {
+            auto_show = true,
+            window = {
+              border = "rounded",
+            },
           },
         },
       },
@@ -131,6 +152,35 @@ require("lazy").setup({
       "esmuellert/codediff.nvim",
       cmd = "CodeDiff",
     },
+
+    -- nvim-autopairs
+    {
+      'windwp/nvim-autopairs',
+      event = "InsertEnter",
+      config = true
+    },
+
+    {
+      "nvim-neotest/neotest",
+      dependencies = {
+        "nvim-neotest/nvim-nio",
+        "nvim-lua/plenary.nvim",
+        "antoinemadec/FixCursorHold.nvim",
+        "nvim-treesitter/nvim-treesitter",
+        {
+          'mrcjkb/rustaceanvim',
+          version = '^8',
+          lazy = false,
+        }
+      },
+      config = function()
+        require('neotest').setup({
+          adapters = {
+            require('rustaceanvim.neotest')
+          },
+        })
+      end,
+    },
   },
   -- Configure any other settings here. See the documentation for more details.
   -- colorscheme that will be used when installing plugins.
@@ -144,8 +194,10 @@ require("lazy").setup({
 --------------------------
 
 -- LSP
--- vim.lsp.enable('lua_ls')
+vim.lsp.enable('lua_ls')
+vim.lsp.enable('ts_ls')
 vim.lsp.enable('rust_analyzer')
+vim.lsp.enable('sourcekit')
 
 vim.cmd("colorscheme gruvbox")
 
@@ -207,7 +259,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
     map("n", "gD", vim.lsp.buf.declaration, "Goto Declaration")
     map("n", "gr", telescope.lsp_references, "Goto References")
     map("n", "gi", telescope.lsp_implementations, "Goto Implementation")
-    map("n", "gt", telescope.lsp_type_definitions, "Goto Type Definition")
+    -- map("n", "gt", telescope.lsp_type_definitions, "Goto Type Definition")
 
     -- Diagnostics
     map("n", "<leader>d", vim.diagnostic.open_float, "Show Diagnostic")
@@ -219,7 +271,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
     map("n", "<F2>", vim.lsp.buf.rename, "Rename")
     map("n", "<C-.>", vim.lsp.buf.code_action, "Code Action")
     map("i", "<C-.>", vim.lsp.buf.code_action, "Code Action")
-    map("n", "<leader>f", vim.lsp.buf.format, "Format")
+    map("n", "<leader>fm", vim.lsp.buf.format, "Format")
 
     -- Hover / Signature
     map("n", "K", vim.lsp.buf.hover, "Hover Docs")
@@ -230,4 +282,3 @@ vim.api.nvim_create_autocmd("LspAttach", {
     map("n", "<leader>ds", telescope.lsp_document_symbols, "Document Symbols")
   end,
 })
-
